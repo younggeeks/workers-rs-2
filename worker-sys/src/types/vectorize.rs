@@ -4,7 +4,7 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "VectorizeIndex")]
-    #[derive(Debug, Clone, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq)]
     pub type VectorizeIndex;
 
     #[wasm_bindgen(structural, method, catch, js_name=describe)]

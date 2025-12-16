@@ -6,7 +6,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 use worker_sys::VectorizeIndexDetails;
-use worker_sys::{console_log, Vectorize as VectorizeSys};
+use worker_sys::{console_log, VectorizeIndex as VectorizeSys};
 
 use crate::EnvBinding;
 
