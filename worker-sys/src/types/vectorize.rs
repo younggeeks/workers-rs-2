@@ -3,15 +3,15 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(extends=::js_sys::Object, js_name=VectorizeIndex)]
+    #[wasm_bindgen(extends=::js_sys::Object, js_name=VectorizeIndex, typescript_type="VectorizeIndex")]
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub type Vectorize;
+    pub type VectorizeIndex;
 
     #[wasm_bindgen(structural, method, catch, js_name=describe)]
-    pub fn describe(this: &Vectorize) -> Result<Promise, JsValue>;
+    pub fn describe(this: &VectorizeIndex) -> Result<Promise, JsValue>;
 
     #[wasm_bindgen(structural, method, catch, js_name=insert)]
-    pub fn insert(this: &Vectorize, vectors: &Array) -> Result<Promise, JsValue>;
+    pub fn insert(this: &VectorizeIndex, vectors: &Array) -> Result<Promise, JsValue>;
 }
 
 #[wasm_bindgen]
