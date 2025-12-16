@@ -1,7 +1,7 @@
-use js_sys::Array;
-use js_sys::{Object, Promise, Reflect};
+use js_sys::{Array, Promise};
+use js_sys::{Object, Reflect};
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::closure::Closure;
+use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
@@ -26,30 +26,38 @@ pub struct Vector {
     pub namespace: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct IndexDetails {
     pub name: Option<String>,
-    pub dimensions: u32,
+    pub description: Option<String>,
+    pub dimensions: Option<u32>,
     #[serde(default)]
     pub metric: Option<String>,
-    pub processed_vectors_count: u32,
-    pub stored_vectors_count: u32,
+    pub processed_vectors_count: Option<u32>,
+    pub stored_vectors_count: Option<u32>,
+    pub vector_count: Option<u32>,
+    pub processed_up_to_datetime: Option<u64>,
+    pub processed_up_to_mutation: Option<String>,
 }
 
 impl From<VectorizeIndexDetails> for IndexDetails {
     fn from(details: VectorizeIndexDetails) -> Self {
         Self {
             name: details.name(),
-            dimensions: details.dimensions(),
+            description: None,
+            dimensions: Some(details.dimensions()),
             metric: Some(details.metric()),
-            processed_vectors_count: details.processed_vectors_count(),
-            stored_vectors_count: details.stored_vectors_count(),
+            processed_vectors_count: Some(details.processed_vectors_count()),
+            stored_vectors_count: Some(details.stored_vectors_count()),
+            vector_count: None,
+            processed_up_to_datetime: None,
+            processed_up_to_mutation: None,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Vectorize(VectorizeSys);
 
 unsafe impl Send for Vectorize {}
@@ -59,15 +67,26 @@ impl EnvBinding for Vectorize {
     const TYPE_NAME: &'static str = "Vectorize";
 
     fn get(val: wasm_bindgen::JsValue) -> crate::Result<Self> {
-        // If we already have a real Vectorize binding, use it.
         if val.is_instance_of::<VectorizeSys>() {
             let obj = Object::from(val);
             return Ok(obj.unchecked_into());
         }
 
-        // Otherwise, treat it as a plain object and shim a describe() Promise for tests.
+        // Otherwise, treat it as a plain object. If it already looks like a real binding
+        // (has Vectorize internals like fetcher/indexId), return it untouched to preserve prototype methods.
         if val.is_object() {
-            let base = Object::assign(&Object::new(), &Object::from(val.clone()));
+            let obj = Object::from(val.clone());
+            let has_describe = Reflect::has(&obj, &JsValue::from("describe")).unwrap_or(false);
+            let has_insert = Reflect::has(&obj, &JsValue::from("insert")).unwrap_or(false);
+            let has_upsert = Reflect::has(&obj, &JsValue::from("upsert")).unwrap_or(false);
+
+            if has_describe || has_insert || has_upsert {
+                // Preserve the original host object + prototype chain
+                return Ok(val.unchecked_into());
+            }
+
+            // Shim a describe() Promise for test objects.
+            let base = Object::assign(&Object::new(), &obj);
             let describe_base = base.clone();
             let closure = Closure::wrap(Box::new(move || {
                 let details = Object::new();
@@ -164,6 +183,9 @@ impl Vectorize {
         if details.metric.is_none() {
             details.metric = Some("cosine".to_string());
         }
+        if details.dimensions.is_none() {
+            details.dimensions = Some(0);
+        }
 
         Ok(details)
     }
@@ -173,7 +195,11 @@ impl Vectorize {
         let array = js_vectors
             .dyn_into::<Array>()
             .map_err(|val| Array::from(&val))?;
-        console_log!("insert {:?}", self.0);
+        console_log!(
+            "Vectorize::insert - about to call self.0.insert with array length: {}",
+            array.length()
+        );
+
         let promise = self.0.insert(&array)?;
 
         let value = JsFuture::from(promise).await?;
