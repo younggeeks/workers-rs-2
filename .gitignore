@@ -6,3 +6,4 @@ generated
 package-lock.json
 .wrangler
 node_modules
+rustc-ice-*

@@ -5,11 +5,11 @@ use crate::analytics_engine::AnalyticsEngineDataset;
 use crate::d1::D1Database;
 use crate::kv::KvStore;
 use crate::rate_limit::RateLimiter;
-use crate::Ai;
 #[cfg(feature = "queue")]
 use crate::Queue;
 use crate::{durable::ObjectNamespace, Bucket, DynamicDispatcher, Fetcher, Result, SecretStore};
 use crate::{error::Error, hyperdrive::Hyperdrive};
+use crate::{Ai, Vectorize};
 
 use js_sys::Object;
 use serde::de::DeserializeOwned;
@@ -126,6 +126,10 @@ impl Env {
 
     /// Access a Rate Limiter by the binding name configured in your wrangler.toml file.
     pub fn rate_limiter(&self, binding: &str) -> Result<RateLimiter> {
+        self.get_binding(binding)
+    }
+
+    pub fn vectorize(&self, binding: &str) -> Result<Vectorize> {
         self.get_binding(binding)
     }
 }

@@ -55,6 +55,13 @@ const mf_instance = new Miniflare({
           foo: 42,
           bar: "string"
         },
+        VECTORIZE: {
+          name: "VECTORIZE",
+          dimensions: 2,
+          metric: "cosine",
+          processedVectorsCount: 0,
+          storedVectorsCount: 0,
+        }
       },
       durableObjects: {
         COUNTER: "Counter",
